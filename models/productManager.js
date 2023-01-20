@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-export class ProductManager {
+export default class ProductManager {
   #path = '';
 
   constructor(path) {
@@ -16,17 +16,17 @@ export class ProductManager {
         this.#generateId(id) + 1;
       return id;
     }
+    return 1;
   }
 
   async getProducts() {
     try {
       if (fs.existsSync(this.#path)) {
         const products = await fs.promises.readFile(this.#path, 'utf-8');
-        const parsedProducts = JSON.parse(products);
+        const parsedProducts = products.length > 0 ?  JSON.parse(products): [];
         return parsedProducts;
-      } else {
-        return [];
       }
+      return [];
     } catch (error) {
       console.log(error);
     }
@@ -34,7 +34,7 @@ export class ProductManager {
 
   async addProduct(title, description, price, thumbnail, code, stock) {
     const products = await this.getProducts();
-    const isCodeExists = products.some((product) => product.code === code);
+    const isCodeExists = products?.some((product) => product.code === code) || false;
 
     if (!isCodeExists && this.#path.length > 0) {
       try {
@@ -49,20 +49,18 @@ export class ProductManager {
         };
         products.push(product);
         await fs.promises.writeFile(this.#path, JSON.stringify(products));
+        return products;
       } catch (error) {
         console.log(error);
       }
-    } else {
-      return undefined;
     }
+    return undefined;
   }
 
   async getProductById(id) {
     const products = await this.getProducts();
-    console.log('products', products);
     const product = products.find((product) => product.id === id);
-    console.log('product', product);
-    return product ? product : 'Not found';
+    return product ? product : undefined;
   }
 
   async updateProduct(

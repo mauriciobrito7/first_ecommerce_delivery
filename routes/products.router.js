@@ -6,20 +6,32 @@ const router = Router();
 const productManager = new ProductManager(`${__dirname}/db/products.json`);
 
 router.get('/', async(req, res) => {
-  const products = await productManager.getProducts();
-  res.json(products);
+  const { limit } = req.query;
+  let products = await productManager.getProducts();
+  if (products) {
+    if (limit) {
+      products = products.slice(0, limit)
+    }
+    res.json(products);
+  }else {
+    res.status(404).json({ message: 'no products found' });
+  }
 });
 
 router.get('/:id', async(req, res) => {
   const id = parseInt(req.params.id);
   const product = await productManager.getProductById(id);
-  res.json(product);
+  if(product) {
+    res.json(product);
+  }else {
+    res.status(404).json({ message: 'product not found' });
+  }
 });
 
 router.post('/', async(req, res) => {
   const body = req.body;
   const { title, description, price, thumbnail, code, stock } = body;
-  const product = await productManager.addProduct(
+  const products = await productManager.addProduct(
     title,
     description,
     price,
@@ -28,8 +40,8 @@ router.post('/', async(req, res) => {
     stock
   );
 
-  if(product) {
-    res.json({ message:'product added successfully', product});
+  if(products) {
+    res.json({ message:'product added successfully', products});
   } else {
     res.status(400).json({ message:'product not added' });
   }
